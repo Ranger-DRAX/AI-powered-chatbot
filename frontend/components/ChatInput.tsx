@@ -79,7 +79,7 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="Ask UniBot a question… (Enter to send, Shift+Enter for new line)"
+          placeholder="Ask about your course materials, e.g., What is an array in CSE220?"
           rows={1}
           disabled={isLoading}
           className={cn(

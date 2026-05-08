@@ -43,7 +43,7 @@ function EmptyState() {
           No messages yet
         </p>
         <p className="text-xs text-zinc-400 dark:text-zinc-500 max-w-xs">
-          Select a course from the sidebar, then type your question below to get started.
+          Type your question below to get started. Don't forget to mention the course code if applicable (e.g. CSE220)!
         </p>
       </div>
     </div>

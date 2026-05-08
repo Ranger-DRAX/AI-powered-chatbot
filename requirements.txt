@@ -19,3 +19,10 @@ pandas
 python-dotenv
 tqdm
 pydantic
+fastapi
+uvicorn
+chromadb
+sentence-transformers
+groq
+pytest
+httpx

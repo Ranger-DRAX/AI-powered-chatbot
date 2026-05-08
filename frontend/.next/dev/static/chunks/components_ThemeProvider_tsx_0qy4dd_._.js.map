@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///K:/Certificat%20course/AI-powered%20chatbot/frontend/components/ThemeProvider.tsx"],"sourcesContent":["\"use client\";\n\nimport { ThemeProvider as NextThemesProvider } from \"next-themes\";\nimport { type ThemeProviderProps } from \"next-themes/dist/types\";\n\nexport function ThemeProvider({ children, ...props }: ThemeProviderProps) {\n  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;\n}\n"],"names":["ThemeProvider","children","props"],"mappings":";;;;;AAEA;AAFA;;;AAKO,SAASA,cAAc,EAAEC,QAAQ,EAAE,GAAGC,OAA2B;IACtE,qBAAO,6LAAC,oKAAkB;QAAE,GAAGA,KAAK;kBAAGD;;;;;;AACzC;KAFgBD"}}]
-}

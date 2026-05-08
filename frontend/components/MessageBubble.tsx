@@ -2,7 +2,7 @@
 
 import { Message } from "@/types";
 import { cn } from "@/lib/utils";
-import { Bot, AlertCircle } from "lucide-react";
+import { Bot, AlertCircle, FileText } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface MessageBubbleProps {
@@ -128,6 +128,35 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         <div className="rounded-xl rounded-tl-sm bg-zinc-100 dark:bg-zinc-800 px-4 py-2.5 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200 shadow-sm">
           {parseMarkdown(message.content)}
         </div>
+        {message.sources && message.sources.length > 0 && (
+          <div className="flex flex-col gap-1.5 mt-1">
+            <div className="text-[10px] uppercase font-semibold text-zinc-400">
+              Sources
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {message.sources.map((s, i) => (
+                <div
+                  key={`${s.chunk_id}-${i}`}
+                  className="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-200 px-2.5 py-2 rounded border border-indigo-100 dark:border-indigo-800/30 text-[10px] leading-relaxed"
+                >
+                  <div className="flex items-center gap-1.5 font-semibold">
+                    <FileText size={10} />
+                    <span>{s.file_name || "Course source"}</span>
+                  </div>
+                  <div className="mt-0.5 text-indigo-700/80 dark:text-indigo-300/80">
+                    {s.course}
+                    {s.category ? ` / ${s.category}` : ""}
+                  </div>
+                  {s.source_path && (
+                    <div className="mt-0.5 break-all text-indigo-700/70 dark:text-indigo-300/70">
+                      {s.source_path}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <span className="text-[10px] text-zinc-400 dark:text-zinc-500 pl-1">
           {formatTime(message.timestamp)}
         </span>

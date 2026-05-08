@@ -1,134 +1,115 @@
-# UniBot — University Course Chatbot
+# UniBot - AI-Powered University Course Chatbot
 
-An AI-powered chatbot that answers student questions about university courses. Built with **Next.js 16** (frontend) and **FastAPI** (backend). This is **Phase 1**: a fully working chat UI backed by a smart dummy response engine — no LLM yet.
+UniBot answers student questions using local university course materials with a RAG pipeline. The frontend keeps the chat simple: users only type a question. The backend detects course codes such as `CSE220`, `CSE 220`, `CSE-220`, or `HST103`, resolves them to the indexed Chroma metadata course name, and searches globally when no course is mentioned.
 
----
+## Pipeline
 
-## Features
+- Stage 1 ingestion: reads raw course files into `storage/stage1/unstructured_elements.jsonl`.
+- Stage 2 chunking: creates retrieval chunks in `storage/stage2/chunks.jsonl`.
+- Stage 3 embedding/storage: embeds chunks with `sentence-transformers/all-MiniLM-L6-v2` into Chroma at `vector_store/chroma`, collection `course_knowledge`.
+- Stage 4 retrieval test: verifies vector search from the command line.
+- Stage 5 Groq RAG: retrieves chunks, applies fallback checks, and generates answers with Groq.
+- Stage 6 backend/frontend: exposes `POST /api/chat` and displays answers plus sources.
 
-- 🎓 Course-aware conversations (5 mock CSE courses)
-- 💬 Real-time chat UI with animated message bubbles
-- 🌙 Dark / Light mode toggle
-- ⌨️ Auto-resizing input with character count
-- 🔄 Typing indicator with bounce animation
-- 📱 Keyword-based intelligent dummy responses
-- ⚡ Sub-second simulated response latency
+## Setup
 
----
-
-## Project Structure
-
-```
-university-chatbot/
-├── frontend/     ← Next.js 16 + TypeScript + Tailwind + shadcn/ui
-└── backend/      ← FastAPI + Uvicorn + Pydantic
-```
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- Python 3.10+
-
----
-
-### 1. Backend
-
-```bash
-cd backend
-
-# Create and activate a virtual environment
+```powershell
 python -m venv .venv
-.venv\Scripts\activate        # Windows
-# source .venv/bin/activate   # macOS / Linux
-
-# Install dependencies
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-
-# Copy env file
-copy .env.example .env
-
-# Start the server
-uvicorn main:app --reload --port 8000
+cd frontend
+npm install
+cd ..
 ```
 
-Backend will be available at: **http://localhost:8000**
+Create `.env` from `.env.example` and add your Groq key:
 
-Health check: **http://localhost:8000/health**
+```powershell
+Copy-Item .env.example .env
+```
 
-Interactive API docs: **http://localhost:8000/docs**
+For a fresh clone on another PC, install dependencies first, then either:
 
----
+- Copy your existing `raw/` course files and rerun Stages 1-3 to recreate `storage/` and `vector_store/`.
+- Or copy an already-built `vector_store/chroma/` folder locally if you do not want to rebuild embeddings.
 
-### 2. Frontend
+These data folders are intentionally ignored by git because they are large/generated and may contain course materials.
 
-```bash
+Required environment variables:
+
+```env
+GROQ_API_KEY=""
+GROQ_MODEL="llama-3.3-70b-versatile"
+CHROMA_DIR="vector_store/chroma"
+CHROMA_COLLECTION="course_knowledge"
+EMBEDDING_MODEL="sentence-transformers/all-MiniLM-L6-v2"
+RAG_TOP_K="4"
+RAG_DISTANCE_THRESHOLD="0.90"
+RAG_MAX_CONTEXT_CHARS="8000"
+RAG_MAX_OUTPUT_TOKENS="700"
+RAG_TEMPERATURE="0.1"
+```
+
+## Run
+
+Start the backend:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn backend.main:app --reload
+```
+
+Start the frontend:
+
+```powershell
 cd frontend
-
-# Install dependencies
-npm install
-
-# Copy env file
-copy .env.example .env.local
-
-# Start the dev server
 npm run dev
 ```
 
-Frontend will be available at: **http://localhost:3000**
+Open `http://localhost:3000`.
 
----
+## API
 
-## API Documentation
-
-| Endpoint       | Method | Description              |
-|----------------|--------|--------------------------|
-| `/health`      | GET    | Health check             |
-| `/api/chat`    | POST   | Send a chat message      |
-
-### POST `/api/chat`
-
-**Request Body:**
+The frontend sends only the question and optional session id:
 
 ```json
 {
-  "message": "What is a linked list?",
-  "course": "CSE 203 — Data Structures",
-  "session_id": "abc-123"
+  "question": "What is an array in CSE220?",
+  "session_id": "optional-session-id"
 }
 ```
 
-**Response:**
+The backend also tolerates optional `course` and `category` fields for API clients, but the UI does not expose a course selector.
 
-```json
-{
-  "reply": "Great question! In CSE 203 — Data Structures, ...",
-  "confidence": 0.87,
-  "source": "dummy_knowledge_base",
-  "session_id": "abc-123"
-}
+Windows curl example:
+
+```cmd
+curl -X POST http://127.0.0.1:8000/api/chat ^
+  -H "Content-Type: application/json" ^
+  -d "{\"question\":\"What is an array in CSE220?\"}"
 ```
 
----
+## CLI Checks
 
-## Roadmap
+```powershell
+.\.venv\Scripts\python.exe -m src.stage4_retrieval_test --query "What is an array?" --course CSE220_Data_Structure --top-k 5
 
-- **Phase 2**: Integrate a real LLM (OpenAI / Groq)
-- **Phase 3**: Add vector database (Pinecone / Chroma) for course document retrieval
-- **Phase 4**: File upload (PDFs, slides)
-- **Phase 5**: Authentication + user history
+.\.venv\Scripts\python.exe -m src.stage5_rag_answer_groq --query "What is an array?" --course CSE220 --top-k 4 --distance-threshold 0.90
 
----
+.\.venv\Scripts\python.exe -m src.stage5_rag_answer_groq --query "What is an array in CSE220?" --top-k 4 --distance-threshold 0.90
 
-## Tech Stack
+.\.venv\Scripts\python.exe -m src.stage5_rag_answer_groq --query "Who is the president of France?" --top-k 4 --distance-threshold 0.90
+```
 
-| Layer     | Technology                          |
-|-----------|-------------------------------------|
-| Frontend  | Next.js 16, TypeScript, Tailwind CSS|
-| UI        | shadcn/ui, Radix UI, Lucide Icons   |
-| Themes    | next-themes                         |
-| Backend   | FastAPI, Uvicorn                    |
-| Validation| Pydantic v2                         |
+## Tests
+
+Normal tests mock Chroma retrieval and Groq, so they do not require raw files, Stage 1/2 outputs, the vector store, or a real API call.
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest
+```
+
+Optional live checks should only be run when `RUN_LIVE_RAG_TESTS=1`, `GROQ_API_KEY` is set, and `vector_store/chroma` exists.
+
+## Data Hygiene
+
+Do not commit secrets or generated course data. `.gitignore` excludes `.env`, raw course files, `storage/`, `vector_store/`, virtualenvs, Python caches, and frontend build output.
