@@ -10,6 +10,7 @@ desktop.ini
 !.vscode/extensions.json
 
 # Secrets and local environment files
+
 .env
 .env.*
 !.env.example
@@ -27,6 +28,7 @@ __pycache__/
 .Python
 .venv/
 venv/
+virX/
 env/
 ENV/
 backend/.venv/
